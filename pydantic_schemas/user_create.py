@@ -1,4 +1,3 @@
-# define the Pydantic model for user creation
 from pydantic import BaseModel
 
 
