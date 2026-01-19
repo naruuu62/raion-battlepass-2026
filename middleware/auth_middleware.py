@@ -1,19 +1,22 @@
-import os
-from dotenv import load_dotenv
 from fastapi import HTTPException, Header
 import jwt
 
-load_dotenv()
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+from config.settings import get_settings
+
+settings = get_settings()
 
 
-def auth_middleware(x_auth_token=Header(None)):
+def auth_middleware(x_auth_token: str = Header(None)) -> dict:
+    """Verify JWT token and return user data"""
     try:
         # Check if token is provided
         if not x_auth_token:
-            raise HTTPException(401, "No auth token in header, Access Unauthorized!")
+            raise HTTPException(401, "No auth token provided, Access Unauthorized!")
 
-        verified_token = jwt.decode(x_auth_token, JWT_SECRET_KEY, algorithms=["HS256"])
+        # Verify token
+        verified_token = jwt.decode(
+            x_auth_token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM]
+        )
 
         # Check if token is valid
         if not verified_token:
