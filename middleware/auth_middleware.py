@@ -1,5 +1,10 @@
+import os
+from dotenv import load_dotenv
 from fastapi import HTTPException, Header
 import jwt
+
+load_dotenv()
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 
 
 def auth_middleware(x_auth_token=Header()):
@@ -9,7 +14,7 @@ def auth_middleware(x_auth_token=Header()):
             raise HTTPException(401, "No auth token, Unauthorized!")
 
         # decode the token
-        verified_token = jwt.decode(x_auth_token, "password_key", algorithms=["HS256"])
+        verified_token = jwt.decode(x_auth_token, JWT_SECRET_KEY, algorithms=["HS256"])
 
         if not verified_token:
             raise HTTPException(401, "Token verification failed, Unauthorized!")

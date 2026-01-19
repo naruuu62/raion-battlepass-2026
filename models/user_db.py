@@ -1,5 +1,5 @@
 from sqlalchemy import TEXT, VARCHAR, Column, LargeBinary
-from models.base_model import Base
+from models.base import Base
 
 
 class UserDB(Base):

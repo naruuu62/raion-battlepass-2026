@@ -1,15 +1,20 @@
+import os
 import uuid
 import bcrypt
+from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, Header
 import jwt
-from middleware.auth_middleware import auth_middleware
-from models.user_db_model import UserDB
-from pydantic_schemas.user_create import UserCreate
 from fastapi import APIRouter
 from sqlalchemy.orm import Session
 
+from models.user_db import UserDB
+from pydantic_schemas.user_create import UserCreate
+from middleware.auth_middleware import auth_middleware
 from database import get_db
 from pydantic_schemas.user_login import UserLogin
+
+load_dotenv()
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 
 router = APIRouter()
 
@@ -66,7 +71,7 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
         {
             "id": user_db.id,
         },
-        "password_key",
+        JWT_SECRET_KEY,
     )
 
     return {"token": token, "user": user_db}

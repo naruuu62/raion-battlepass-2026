@@ -1,8 +1,12 @@
+import os
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+load_dotenv()
+
 # setup the database connection
-DATABASE_URL = "postgresql://postgres:09072511@localhost:5432/fluttermusicapp"
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 # create the database engine and session provide by SQLAlchemy
 engine = create_engine(DATABASE_URL)
