@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import os
 import uuid
 import bcrypt
@@ -7,6 +8,7 @@ import jwt
 from fastapi import APIRouter
 from sqlalchemy.orm import Session
 
+from response.auth_response import AuthResponse
 from models.user_db import UserDB
 from pydantic_schemas.user_create import UserCreate
 from middleware.auth_middleware import auth_middleware
@@ -19,49 +21,40 @@ JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 router = APIRouter()
 
 
+# SIGNUP ENDPOINT
 @router.post("/signup", status_code=201)
 def signup_user(user: UserCreate, db: Session = Depends(get_db)):
-    # TODO 1: Ekstrak data yang berasal dari request
-    # print(user.email)
-    # print(user.name)
-    # print(user.password)
 
-    # TODO 2: Cek apakah user sudah ada di database
     user_db = db.query(UserDB).filter(UserDB.email == user.email).first()
 
-    # Jika ada user, kembalikan pesan bahwa user sudah ada
     if user_db is not None:
         raise HTTPException(400, detail="User with the same email already exists!")
 
-    # Hash password
     hashed_pw = bcrypt.hashpw(user.password.encode(), bcrypt.gensalt())
 
-    # Jika tidak ada, buat user baru
     user_db = UserDB(
-        id=str(uuid.uuid4()),  # UUID untuk ID unik dari Python
+        id=str(uuid.uuid4()),
         name=user.name,
         email=user.email,
         password=hashed_pw,
     )
 
-    # TODO 3: add the user to db
     db.add(user_db)
     db.commit()
     db.refresh(user_db)
 
-    return user_db
+    return AuthResponse.model_validate(user_db)
 
 
+# LOGIN ENDPOINT
 @router.post("/login")
 def login_user(user: UserLogin, db: Session = Depends(get_db)):
 
-    # check if a user with same email already exist
     user_db = db.query(UserDB).filter(UserDB.email == user.email).first()
 
     if not user_db:
         raise HTTPException(400, detail="User with this email does not exist!")
 
-    # if user exist, password matching or not
     is_match = bcrypt.checkpw(user.password.encode(), user_db.password)
 
     if not is_match:
@@ -72,18 +65,20 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
             "id": user_db.id,
         },
         JWT_SECRET_KEY,
+        algorithm="HS256",
     )
 
-    return {"token": token, "user": user_db}
+    return {"token": token, "user": AuthResponse.model_validate(user_db)}
 
 
+# CURRENT USER DATA ENDPOINT
 @router.get("/")
 def current_user_data(
     db: Session = Depends(get_db), user_dict=Depends(auth_middleware)
 ):
-    user = db.query(UserDB).filter(UserDB.id == user_dict["uid"]).first()
+    user_db = db.query(UserDB).filter(UserDB.id == user_dict["uid"]).first()
 
-    if not user:
+    if not user_db:
         raise HTTPException(404, detail="User not found")
 
-    return user
+    return AuthResponse.model_validate(user_db)
