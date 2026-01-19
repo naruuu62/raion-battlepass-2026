@@ -1,11 +1,29 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-from models.base import Base
+from config.settings import get_settings
 from database import engine
-
+from models.base import Base
 from routes import auth_routes, song_routes
 
-app = FastAPI()
+settings = get_settings()
+
+app = FastAPI(
+    title="Music App API",
+    description="API for Music Application",
+)
+
+# # CORS Middleware
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=["*"],  # Adjust in production
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
+
 app.include_router(auth_routes.router, prefix="/auth")
 app.include_router(song_routes.router, prefix="/songs")
-Base.metadata.create_all(engine)
+
+# Create database tables
+Base.metadata.create_all(bind=engine)
