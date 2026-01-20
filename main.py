@@ -13,14 +13,15 @@ app = FastAPI(
     description="API for Music Application",
 )
 
-# # CORS Middleware
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=["*"],  # Adjust in production
-#     allow_credentials=True,
-#     allow_methods=["*"],
-#     allow_headers=["*"],
-# )
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "*"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(auth_routes.router, prefix="/auth")
 app.include_router(song_routes.router, prefix="/songs")
